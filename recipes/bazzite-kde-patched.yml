@@ -17,3 +17,5 @@ modules:
     system:
       enabled:
         - cyan-skillfish-governor-smu.service
+
+  - type: signing

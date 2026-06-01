@@ -102,11 +102,13 @@ jobs:
           BB_USERNAME: ${{ github.repository_owner }}
           BB_REGISTRY: ghcr.io
           BB_REGISTRY_NAMESPACE: ${{ github.repository_owner }}
+          COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
+          COSIGN_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
           GH_TOKEN: ${{ github.token }}
           GH_PR_EVENT_NUMBER: ${{ github.event.number }}
           RUST_LOG_STYLE: always
           CLICOLOR_FORCE: "1"
-        run: bluebuild build -v --no-sign "recipes/${{ matrix.recipe }}"
+        run: bluebuild build -v "recipes/${{ matrix.recipe }}"
 
   save-base-digests:
     name: Save Bazzite stable digest cache

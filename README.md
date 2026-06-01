@@ -51,7 +51,13 @@ Those images used Bazzite/Fedora 42, the old `vietsman/patched-kernel-bc250` COP
 | GNOME | `ghcr.io/ublue-os/bazzite-gnome:stable` | `ghcr.io/62fixolab/bazzite-bc250-patched-gnome:latest` |
 | KDE | `ghcr.io/ublue-os/bazzite:stable` | `ghcr.io/62fixolab/bazzite-bc250-patched-kde:latest` |
 
-All images are built unsigned, so installation uses `ostree-unverified-registry`.
+All images are signed with cosign and include the signing policy needed for `ostree-image-signed`.
+
+You can verify a published image with the public key in this repository:
+
+```bash
+cosign verify --key cosign.pub ghcr.io/62fixolab/bazzite-bc250-patched-deck:latest
+```
 
 ## What changed from the original images
 
@@ -62,7 +68,7 @@ All images are built unsigned, so installation uses `ostree-unverified-registry`
 | Kernel patching | `vietsman/patched-kernel-bc250` COPR | Current Bazzite kernel; no old kernel COPR |
 | Governor | `oberon-governor` | `cyan-skillfish-governor-smu` |
 | `655%` GPU usage bug | Not handled by Oberon | Fixed by the SMU governor's `gpu_metrics` bind-mount patch |
-| Install ref | Signed `ghcr.io/vietsman/...` images | Unsigned `ghcr.io/62fixolab/...` images |
+| Install ref | Signed `ghcr.io/vietsman/...` images | Signed `ghcr.io/62fixolab/...` images |
 
 ## Before you install
 
@@ -90,13 +96,13 @@ Choose the image you want:
 
 ```bash
 # Deck
-rpm-ostree rebase ostree-unverified-registry:ghcr.io/62fixolab/bazzite-bc250-patched-deck:latest
+rpm-ostree rebase ostree-image-signed:docker://ghcr.io/62fixolab/bazzite-bc250-patched-deck:latest
 
 # GNOME
-rpm-ostree rebase ostree-unverified-registry:ghcr.io/62fixolab/bazzite-bc250-patched-gnome:latest
+rpm-ostree rebase ostree-image-signed:docker://ghcr.io/62fixolab/bazzite-bc250-patched-gnome:latest
 
 # KDE
-rpm-ostree rebase ostree-unverified-registry:ghcr.io/62fixolab/bazzite-bc250-patched-kde:latest
+rpm-ostree rebase ostree-image-signed:docker://ghcr.io/62fixolab/bazzite-bc250-patched-kde:latest
 ```
 
 Then reboot:
