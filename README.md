@@ -15,12 +15,6 @@
 
 Bazzite images for AMD BC-250 boards. This repository builds Deck, GNOME, and KDE variants from the current official Bazzite stable base and adds `cyan-skillfish-governor-smu` for BC-250 GPU frequency scaling and the `655%` GPU usage telemetry fix.
 
-Repository description:
-
-```text
-Current Bazzite Deck, GNOME, and KDE images for AMD BC-250 boards with cyan-skillfish-governor-smu, GPU frequency scaling, and the MangoHud/radeontop 655% telemetry fix.
-```
-
 ## Origin
 
 This project is a consolidated continuation of the three original BC-250 patched image repositories by vietsman:
