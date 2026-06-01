@@ -63,12 +63,16 @@ cosign verify --key cosign.pub ghcr.io/62fixolab/bazzite-bc250-patched-deck:late
 
 | Area | vietsman images | This repository |
 | --- | --- | --- |
-| Repository layout | One repo per image | One repo with three BlueBuild recipes |
-| Base | Older pinned Bazzite/Fedora 42 base | Current Bazzite stable base |
-| Kernel patching | `vietsman/patched-kernel-bc250` COPR | Current Bazzite kernel; no old kernel COPR |
-| Governor | `oberon-governor` | `cyan-skillfish-governor-smu` |
+| Project shape | Three separate repositories | One maintained repository building Deck, GNOME, and KDE |
+| Bazzite base | Older pinned Bazzite/Fedora 42 base | Current official Bazzite `stable` base |
+| Update model | Weekly rebuilds from the old pinned base | Daily digest check; rebuilds only when Bazzite `stable` changes |
+| Kernel approach | Old `vietsman/patched-kernel-bc250` COPR | Current Bazzite kernel; no old BC-250 kernel COPR required |
+| Governor | `oberon-governor` | Newer `cyan-skillfish-governor-smu` |
+| GPU frequency scaling | Provided by Oberon + patched kernel stack | Provided by the SMU governor on current Bazzite |
 | `655%` GPU usage bug | Not handled by Oberon | Fixed by the SMU governor's `gpu_metrics` bind-mount patch |
-| Install ref | Signed `ghcr.io/vietsman/...` images | Signed `ghcr.io/62fixolab/...` images |
+| Image signing | Signed `ghcr.io/vietsman/...` images | Signed `ghcr.io/62fixolab/...` images with this repo's `cosign.pub` |
+| Install ref | `ostree-image-signed:docker://ghcr.io/vietsman/...` | `ostree-image-signed:docker://ghcr.io/62fixolab/...` |
+| Main benefit | Original BC-250 patched image set | Same idea, but current Bazzite, newer governor, automatic stable tracking, and signed images |
 
 ## Before you install
 
