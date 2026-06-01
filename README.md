@@ -29,7 +29,7 @@
 
 # Bazzite AMD BC-250 Patched Images for Deck, GNOME, and KDE
 
-[![bluebuild build badge](https://github.com/62fixolab/bazzite-amd-bc-250-patched-images/actions/workflows/build.yml/badge.svg)](https://github.com/62fixolab/bazzite-amd-bc-250-patched-images/actions/workflows/build.yml)
+[![Build Bazzite BC-250](https://github.com/62fixolab/Latest-Bazzite-AMD-BC-250-Patched-Images/actions/workflows/build.yml/badge.svg)](https://github.com/62fixolab/Latest-Bazzite-AMD-BC-250-Patched-Images/actions/workflows/build.yml)
 
 Bazzite images for AMD BC-250 boards. This repository builds Deck, GNOME, and KDE variants from the current official Bazzite stable base and adds `cyan-skillfish-governor-smu` for BC-250 GPU frequency scaling and the `655%` GPU usage telemetry fix.
 
