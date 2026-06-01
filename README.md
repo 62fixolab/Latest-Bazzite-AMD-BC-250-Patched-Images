@@ -121,6 +121,19 @@ If Sunshine stops working after rebasing, reinstall its Bazzite integration:
 ujust setup-sunshine
 ```
 
+On newer Bazzite/Sunshine builds, the BC-250 can crash Sunshine with `status=139`/SIGSEGV when hardware encoding falls back through unsupported encoder paths such as Vulkan. If Sunshine crashes on startup, force software encoding first to confirm the service is otherwise healthy:
+
+```bash
+systemctl --user stop homebrew.sunshine.service
+mkdir -p ~/.config/sunshine
+sed -i '/^encoder *=/d;/^capture *=/d' ~/.config/sunshine/sunshine.conf 2>/dev/null || true
+printf '\nencoder = software\ncapture = kms\n' >> ~/.config/sunshine/sunshine.conf
+systemctl --user restart homebrew.sunshine.service
+journalctl --user -u homebrew.sunshine.service -b -f
+```
+
+Then open the Sunshine UI at `https://localhost:47990` or `https://<host-ip>:47990`. This is safer than Vulkan on current BC-250 setups, but it uses CPU encoding; start with conservative Moonlight settings such as 1080p, 30 FPS, and 10-20 Mbps. VAAPI is the preferred long-term hardware encoder to retest after Sunshine, Mesa, or Bazzite updates.
+
 ### Deck UI micro-stutter
 
 On some BC-250 Deck UI setups, Bazzite's Handheld Daemon can restart repeatedly because expected handheld hardware is not present. If you see consistent micro-stutters, disable and mask it:
