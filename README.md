@@ -9,6 +9,24 @@
 ## AdMate App
 [![Banner - AdMate App](https://github.com/62fixolab/62fixolab/raw/master/assets/banner-admate.png)](https://admate.dev)
 
+## Table of Contents
+
+- [Bazzite AMD BC-250 Patched Images for Deck, GNOME, and KDE](#bazzite-amd-bc-250-patched-images-for-deck-gnome-and-kde)
+  - [Origin](#origin)
+  - [Images](#images)
+  - [What changed from the original images](#what-changed-from-the-original-images)
+  - [Before you install](#before-you-install)
+  - [Installation](#installation)
+  - [Post-install checks](#post-install-checks)
+  - [Known BC-250 notes](#known-bc-250-notes)
+    - [Sunshine](#sunshine)
+    - [Deck UI micro-stutter](#deck-ui-micro-stutter)
+    - [Temperature sensors](#temperature-sensors)
+    - [GPU card naming](#gpu-card-naming)
+    - [Power and thermals](#power-and-thermals)
+  - [Updates](#updates)
+  - [References](#references)
+
 # Bazzite AMD BC-250 Patched Images for Deck, GNOME, and KDE
 
 [![bluebuild build badge](https://github.com/62fixolab/bazzite-amd-bc-250-patched-images/actions/workflows/build.yml/badge.svg)](https://github.com/62fixolab/bazzite-amd-bc-250-patched-images/actions/workflows/build.yml)
