@@ -117,7 +117,7 @@ jobs:
           BB_REGISTRY: ghcr.io
           BB_REGISTRY_NAMESPACE: ${{ github.repository_owner }}
           COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
-          COSIGN_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+          COSIGN_PASSWORD: ""
           GH_TOKEN: ${{ github.token }}
           GH_PR_EVENT_NUMBER: ${{ github.event.number }}
           RUST_LOG_STYLE: always
