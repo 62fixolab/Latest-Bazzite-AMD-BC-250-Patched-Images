@@ -1,0 +1,37 @@
+name: Build Bazzite BC-250
+on:
+  schedule:
+    - cron: "40 8 * * 1"
+  push:
+    paths-ignore:
+      - "**.md"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  bluebuild:
+    name: Build Custom Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        recipe:
+          - bazzite-deck-patched.yml
+          - bazzite-gnome-patched.yml
+          - bazzite-kde-patched.yml
+    steps:
+      - name: Build Custom Image
+        uses: blue-build/github-action@v1.8
+        with:
+          recipe: ${{ matrix.recipe }}
+          registry_token: ${{ github.token }}
+          pr_event_number: ${{ github.event.number }}
+          build_opts: --no-sign
+          maximize_build_space: true

@@ -1,0 +1,19 @@
+---
+# yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
+name: bazzite-deck-patched
+description: Bazzite Deck stable image for AMD BC-250 with cyan-skillfish-governor-smu included.
+
+base-image: ghcr.io/ublue-os/bazzite-deck
+image-version: stable
+
+modules:
+  - type: rpm-ostree
+    repos:
+      - https://copr.fedorainfracloud.org/coprs/filippor/bazzite/repo/fedora-%OS_VERSION%/filippor-bazzite-fedora-%OS_VERSION%.repo
+    install:
+      - cyan-skillfish-governor-smu
+
+  - type: systemd
+    system:
+      enabled:
+        - cyan-skillfish-governor-smu.service
