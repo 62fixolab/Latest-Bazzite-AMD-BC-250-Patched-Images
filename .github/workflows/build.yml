@@ -1,7 +1,7 @@
 name: Build Bazzite BC-250
 on:
   schedule:
-    - cron: "40 8 * * 1"
+    - cron: "40 8 * * *"
   push:
     paths-ignore:
       - "**.md"
@@ -15,8 +15,49 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
+  base-digests:
+    name: Check Bazzite stable digests
+    runs-on: ubuntu-latest
+    outputs:
+      cache-hit: ${{ steps.base-digest-cache.outputs.cache-hit }}
+      cache-key: ${{ steps.base-digests.outputs.cache-key }}
+      deck-digest: ${{ steps.base-digests.outputs.deck-digest }}
+      gnome-digest: ${{ steps.base-digests.outputs.gnome-digest }}
+      kde-digest: ${{ steps.base-digests.outputs.kde-digest }}
+      should-build: ${{ github.event_name != 'schedule' || steps.base-digest-cache.outputs.cache-hit != 'true' }}
+    steps:
+      - name: Resolve base image digests
+        id: base-digests
+        run: |
+          mkdir -p .base-image-digests
+
+          deck_digest="$(docker buildx imagetools inspect ghcr.io/ublue-os/bazzite-deck:stable | awk '/Digest:/ {print $2; exit}')"
+          gnome_digest="$(docker buildx imagetools inspect ghcr.io/ublue-os/bazzite-gnome:stable | awk '/Digest:/ {print $2; exit}')"
+          kde_digest="$(docker buildx imagetools inspect ghcr.io/ublue-os/bazzite:stable | awk '/Digest:/ {print $2; exit}')"
+
+          {
+            echo "deck=${deck_digest}"
+            echo "gnome=${gnome_digest}"
+            echo "kde=${kde_digest}"
+          } | tee .base-image-digests/digests.txt
+
+          cache_key="bazzite-stable-digests-$(sha256sum .base-image-digests/digests.txt | awk '{print $1}')"
+          echo "cache-key=${cache_key}" >> "${GITHUB_OUTPUT}"
+          echo "deck-digest=${deck_digest}" >> "${GITHUB_OUTPUT}"
+          echo "gnome-digest=${gnome_digest}" >> "${GITHUB_OUTPUT}"
+          echo "kde-digest=${kde_digest}" >> "${GITHUB_OUTPUT}"
+
+      - name: Restore base digest cache
+        id: base-digest-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .base-image-digests
+          key: ${{ steps.base-digests.outputs.cache-key }}
+
   bluebuild:
     name: Build Custom Image
+    needs: base-digests
+    if: needs.base-digests.outputs.should-build == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -38,3 +79,27 @@ jobs:
           pr_event_number: ${{ github.event.number }}
           build_opts: --no-sign
           maximize_build_space: true
+
+  save-base-digests:
+    name: Save Bazzite stable digest cache
+    needs:
+      - base-digests
+      - bluebuild
+    if: needs.base-digests.outputs.cache-hit != 'true' && needs.bluebuild.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Record base image digests
+        run: |
+          mkdir -p .base-image-digests
+
+          {
+            echo "deck=${{ needs.base-digests.outputs.deck-digest }}"
+            echo "gnome=${{ needs.base-digests.outputs.gnome-digest }}"
+            echo "kde=${{ needs.base-digests.outputs.kde-digest }}"
+          } | tee .base-image-digests/digests.txt
+
+      - name: Save base digest cache
+        uses: actions/cache/save@v4
+        with:
+          path: .base-image-digests
+          key: ${{ needs.base-digests.outputs.cache-key }}
