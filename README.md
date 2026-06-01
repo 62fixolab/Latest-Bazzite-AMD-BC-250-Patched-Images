@@ -162,6 +162,8 @@ sudo systemctl restart cyan-skillfish-governor-smu
 
 ## Updates
 
+Images are checked daily against the current official Bazzite `stable` base digests. If Deck, GNOME, or KDE stable changes, GitHub Actions rebuilds and publishes the three patched images automatically.
+
 For normal system updates after rebasing to one of these images:
 
 ```bash
