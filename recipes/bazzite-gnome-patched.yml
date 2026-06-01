@@ -1,6 +1,6 @@
 ---
 # yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
-name: bazzite-bc250-gnome-patched
+name: bazzite-bc250-patched-gnome
 description: Bazzite GNOME stable image for AMD BC-250 with cyan-skillfish-governor-smu included.
 
 base-image: ghcr.io/ublue-os/bazzite-gnome
