@@ -11,9 +11,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
   cancel-in-progress: true
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   base-digests:
     name: Check Bazzite stable digests
@@ -49,7 +46,7 @@ jobs:
 
       - name: Restore base digest cache
         id: base-digest-cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5.0.5
         with:
           path: .base-image-digests
           key: ${{ steps.base-digests.outputs.cache-key }}
@@ -71,14 +68,45 @@ jobs:
           - bazzite-gnome-patched.yml
           - bazzite-kde-patched.yml
     steps:
-      - name: Build Custom Image
-        uses: blue-build/github-action@v1.8
+      - name: Checkout repository
+        uses: actions/checkout@v6.0.2
         with:
-          recipe: ${{ matrix.recipe }}
-          registry_token: ${{ github.token }}
-          pr_event_number: ${{ github.event.number }}
-          build_opts: --no-sign
-          maximize_build_space: true
+          persist-credentials: false
+
+      - name: Maximize build space
+        uses: hastd/free-disk-space@68572aeaadb7f76bd408246328e95926323402b5
+        with:
+          skip-if-available: "80G"
+
+      - name: Set up Docker Buildx
+        run: |
+          docker buildx create --name bluebuild-builder --driver docker-container --use
+          docker buildx inspect --bootstrap
+
+      - name: Install BlueBuild
+        run: |
+          set -euo pipefail
+
+          sudo docker create \
+            --name blue-build-installer \
+            ghcr.io/blue-build/cli:v0.9-installer
+          sudo docker cp blue-build-installer:/out/bluebuild /usr/bin/bluebuild
+          sudo docker rm blue-build-installer
+
+          bluebuild --version
+
+      - name: Build Custom Image
+        env:
+          BB_BUILD_PUSH: "true"
+          BB_PASSWORD: ${{ github.token }}
+          BB_USERNAME: ${{ github.repository_owner }}
+          BB_REGISTRY: ghcr.io
+          BB_REGISTRY_NAMESPACE: ${{ github.repository_owner }}
+          GH_TOKEN: ${{ github.token }}
+          GH_PR_EVENT_NUMBER: ${{ github.event.number }}
+          RUST_LOG_STYLE: always
+          CLICOLOR_FORCE: "1"
+        run: bluebuild build -v --no-sign "recipes/${{ matrix.recipe }}"
 
   save-base-digests:
     name: Save Bazzite stable digest cache
@@ -99,7 +127,7 @@ jobs:
           } | tee .base-image-digests/digests.txt
 
       - name: Save base digest cache
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5.0.5
         with:
           path: .base-image-digests
           key: ${{ needs.base-digests.outputs.cache-key }}
