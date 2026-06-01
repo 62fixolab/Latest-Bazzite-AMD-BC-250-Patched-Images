@@ -9,7 +9,7 @@
 ## AdMate App
 [![Banner - AdMate App](https://github.com/62fixolab/62fixolab/raw/master/assets/banner-admate.png)](https://admate.dev)
 
-# bazzite-bc250-patched
+# Bazzite BC250 Patched
 
 [![bluebuild build badge](https://github.com/62fixolab/bazzite-bc250-patched/actions/workflows/build.yml/badge.svg)](https://github.com/62fixolab/bazzite-bc250-patched/actions/workflows/build.yml)
 
