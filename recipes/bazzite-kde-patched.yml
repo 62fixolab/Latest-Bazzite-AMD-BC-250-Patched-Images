@@ -1,6 +1,6 @@
 ---
 # yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
-name: bazzite-kde-patched
+name: bazzite-bc250-kde-patched
 description: Bazzite KDE stable image for AMD BC-250 with cyan-skillfish-governor-smu included.
 
 base-image: ghcr.io/ublue-os/bazzite

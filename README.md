@@ -29,9 +29,9 @@ Those images used Bazzite/Fedora 42, the old `vietsman/patched-kernel-bc250` COP
 
 | Variant | Base image | Published image |
 | --- | --- | --- |
-| Deck | `ghcr.io/ublue-os/bazzite-deck:stable` | `ghcr.io/62fixolab/bazzite-deck-patched:latest` |
-| GNOME | `ghcr.io/ublue-os/bazzite-gnome:stable` | `ghcr.io/62fixolab/bazzite-gnome-patched:latest` |
-| KDE | `ghcr.io/ublue-os/bazzite:stable` | `ghcr.io/62fixolab/bazzite-kde-patched:latest` |
+| Deck | `ghcr.io/ublue-os/bazzite-deck:stable` | `ghcr.io/62fixolab/bazzite-bc250-deck-patched:latest` |
+| GNOME | `ghcr.io/ublue-os/bazzite-gnome:stable` | `ghcr.io/62fixolab/bazzite-bc250-gnome-patched:latest` |
+| KDE | `ghcr.io/ublue-os/bazzite:stable` | `ghcr.io/62fixolab/bazzite-bc250-kde-patched:latest` |
 
 All images are built unsigned, so installation uses `ostree-unverified-registry`.
 
@@ -59,13 +59,13 @@ Choose the image you want:
 
 ```bash
 # Deck
-rpm-ostree rebase ostree-unverified-registry:ghcr.io/62fixolab/bazzite-deck-patched:latest
+rpm-ostree rebase ostree-unverified-registry:ghcr.io/62fixolab/bazzite-bc250-deck-patched:latest
 
 # GNOME
-rpm-ostree rebase ostree-unverified-registry:ghcr.io/62fixolab/bazzite-gnome-patched:latest
+rpm-ostree rebase ostree-unverified-registry:ghcr.io/62fixolab/bazzite-bc250-gnome-patched:latest
 
 # KDE
-rpm-ostree rebase ostree-unverified-registry:ghcr.io/62fixolab/bazzite-kde-patched:latest
+rpm-ostree rebase ostree-unverified-registry:ghcr.io/62fixolab/bazzite-bc250-kde-patched:latest
 ```
 
 Then reboot:
