@@ -9,7 +9,7 @@
 ## AdMate App
 [![Banner - AdMate App](https://github.com/62fixolab/62fixolab/raw/master/assets/banner-admate.png)](https://admate.dev)
 
-# Bazzite BC250 Patched
+# Bazzite AMD BC-250 Patched Images for Deck, GNOME, and KDE
 
 [![bluebuild build badge](https://github.com/62fixolab/bazzite-bc250-patched/actions/workflows/build.yml/badge.svg)](https://github.com/62fixolab/bazzite-bc250-patched/actions/workflows/build.yml)
 
