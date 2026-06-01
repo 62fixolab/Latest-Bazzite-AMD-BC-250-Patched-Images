@@ -15,6 +15,12 @@
 
 Bazzite images for AMD BC-250 boards. This repository builds Deck, GNOME, and KDE variants from the current official Bazzite stable base and adds `cyan-skillfish-governor-smu` for BC-250 GPU frequency scaling and the `655%` GPU usage telemetry fix.
 
+Repository description:
+
+```text
+Current Bazzite Deck, GNOME, and KDE images for AMD BC-250 boards with cyan-skillfish-governor-smu, GPU frequency scaling, and the MangoHud/radeontop 655% telemetry fix.
+```
+
 ## Origin
 
 This project is a consolidated continuation of the three original BC-250 patched image repositories by vietsman:
@@ -45,6 +51,19 @@ All images are built unsigned, so installation uses `ostree-unverified-registry`
 | Governor | `oberon-governor` | `cyan-skillfish-governor-smu` |
 | `655%` GPU usage bug | Not handled by Oberon | Fixed by the SMU governor's `gpu_metrics` bind-mount patch |
 | Install ref | Signed `ghcr.io/vietsman/...` images | Unsigned `ghcr.io/62fixolab/...` images |
+
+## Before you install
+
+These images assume a BC-250 setup that is already healthy on stock Bazzite:
+
+- Modified BIOS flashed, with P3.00 recommended by the community documentation.
+- VRAM allocation set to 512 MB dynamic.
+- IOMMU disabled in BIOS.
+- Adequate cooling and airflow, especially over the rear VRAM chips.
+- A PSU with enough 12 V headroom for gaming loads.
+- Ethernet available during setup if you rely on USB Wi-Fi adapters.
+
+Unlike older Fedora installs, Bazzite should boot on the BC-250 without `nomodeset`.
 
 ## Installation
 
@@ -98,6 +117,55 @@ cat /sys/class/drm/card1/device/pp_dpm_sclk
 
 MangoHud/radeontop should show normal GPU usage values instead of `655%`.
 
+## Known BC-250 notes
+
+### Sunshine
+
+If Sunshine stops working after rebasing, reinstall its Bazzite integration:
+
+```bash
+ujust setup-sunshine
+```
+
+### Deck UI micro-stutter
+
+On some BC-250 Deck UI setups, Bazzite's Handheld Daemon can restart repeatedly because expected handheld hardware is not present. If you see consistent micro-stutters, disable and mask it:
+
+```bash
+sudo systemctl disable --now hhd
+sudo systemctl mask hhd
+```
+
+### Temperature sensors
+
+For read-only hardware monitoring:
+
+```bash
+echo 'nct6683' | sudo tee /etc/modules-load.d/nct6683.conf
+echo 'options nct6683 force=true' | sudo tee /etc/modprobe.d/sensors.conf
+systemctl reboot
+```
+
+For PWM fan control, use the `nct6687` module and follow the BC-250 sensor documentation.
+
+### GPU card naming
+
+The BC-250 GPU can appear as `card0` or `card1`. If a command fails with `No such file or directory`, try the other card path before assuming the governor is broken.
+
+### Power and thermals
+
+Higher GPU clocks increase power draw and heat. If your board is unstable, lower the maximum frequency or raise conservative voltage points in:
+
+```text
+/etc/cyan-skillfish-governor-smu/config.toml
+```
+
+Then restart the service:
+
+```bash
+sudo systemctl restart cyan-skillfish-governor-smu
+```
+
 ## Updates
 
 For normal system updates after rebasing to one of these images:
@@ -117,5 +185,6 @@ systemctl reboot
 
 - [Bazzite updates, rollbacks, and rebasing](https://docs.bazzite.gg/Installing_and_Managing_Software/Updates_Rollbacks_and_Rebasing/)
 - [Bazzite ujust commands](https://docs.bazzite.gg/Installing_and_Managing_Software/ujust/)
+- [Bazzite Sunshine documentation](https://docs.bazzite.gg/Advanced/sunshine/)
 - [`filippor/cyan-skillfish-governor`](https://github.com/filippor/cyan-skillfish-governor)
 - [`elektricM/amd-bc250-docs`](https://github.com/elektricM/amd-bc250-docs)
