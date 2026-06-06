@@ -54,7 +54,7 @@ jobs:
   bluebuild:
     name: Build Custom Image
     needs: base-digests
-    if: needs.base-digests.outputs.should-build == 'true'
+    if: needs.base-digests.outputs.should-build == 'true' && github.ref_name != '40cu'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -124,12 +124,86 @@ jobs:
           CLICOLOR_FORCE: "1"
         run: bluebuild build -v "recipes/${{ matrix.recipe }}"
 
+  bluebuild_40cu:
+    name: Build Custom 40CU Image
+    needs: base-digests
+    if: needs.base-digests.outputs.should-build == 'true' && github.ref_name == '40cu'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        recipe:
+          - bazzite-deck-patched-40cu.yml
+          - bazzite-gnome-patched-40cu.yml
+          - bazzite-kde-patched-40cu.yml
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Maximize build space
+        uses: hastd/free-disk-space@68572aeaadb7f76bd408246328e95926323402b5
+        with:
+          skip-if-available: "80G"
+
+      - name: Set up Docker Buildx
+        run: |
+          docker buildx create --name bluebuild-builder --driver docker-container --use
+          docker buildx inspect --bootstrap
+
+      - name: Install BlueBuild
+        run: |
+          set -euo pipefail
+
+          sudo docker create \
+            --name blue-build-installer \
+            ghcr.io/blue-build/cli:v0.9-installer
+          sudo docker cp blue-build-installer:/out/bluebuild /usr/bin/bluebuild
+          sudo docker rm blue-build-installer
+
+          bluebuild --version
+
+      - name: Install cosign
+        env:
+          COSIGN_VERSION: v3.0.6
+        run: |
+          set -euo pipefail
+
+          curl -fsSL \
+            -o cosign \
+            "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-amd64"
+          sudo install -m 0755 cosign /usr/local/bin/cosign
+          rm cosign
+
+          cosign version
+
+      - name: Build Custom 40CU Image
+        env:
+          BB_BUILD_PUSH: "true"
+          BB_PASSWORD: ${{ github.token }}
+          BB_USERNAME: ${{ github.repository_owner }}
+          BB_REGISTRY: ghcr.io
+          BB_REGISTRY_NAMESPACE: ${{ github.repository_owner }}
+          COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
+          COSIGN_PASSWORD: ""
+          GH_TOKEN: ${{ github.token }}
+          GH_PR_EVENT_NUMBER: ${{ github.event.number }}
+          RUST_LOG_STYLE: always
+          CLICOLOR_FORCE: "1"
+        run: bluebuild build -v "recipes/${{ matrix.recipe }}"
+
   save-base-digests:
     name: Save Bazzite stable digest cache
     needs:
       - base-digests
       - bluebuild
-    if: needs.base-digests.outputs.cache-hit != 'true' && needs.bluebuild.result == 'success'
+      - bluebuild_40cu
+    if: always() && needs.base-digests.outputs.cache-hit != 'true' && (needs.bluebuild.result == 'success' || needs.bluebuild_40cu.result == 'success')
     runs-on: ubuntu-latest
     steps:
       - name: Record base image digests

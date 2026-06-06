@@ -1,0 +1,37 @@
+---
+# yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
+name: bazzite-bc250-patched-deck-40cu
+description: Bazzite Deck stable image for AMD BC-250 with optional runtime 40CU unlock tooling.
+
+base-image: ghcr.io/ublue-os/bazzite-deck
+image-version: stable
+
+modules:
+  - type: rpm-ostree
+    repos:
+      - https://copr.fedorainfracloud.org/coprs/filippor/bazzite/repo/fedora-%OS_VERSION%/filippor-bazzite-fedora-%OS_VERSION%.repo
+    install:
+      - cyan-skillfish-governor-smu
+      - pciutils
+      - umr
+
+  - type: files
+    files:
+      - source: system
+        destination: /
+
+  - type: justfiles
+    include:
+      - bc250-40cu.just
+
+  - type: script
+    snippets:
+      - chmod 0755 /usr/bin/bc250-cu-live-manager /usr/bin/bc250-governor-profile /usr/share/bc250-40cu/vendor/bc250-cu-live-manager/bc250-cu-live-manager.sh
+      - find /usr/share/bc250-40cu/vendor/bc250-40cu-unlock/scripts -type f -name '*.sh' -exec chmod 0755 {} +
+
+  - type: systemd
+    system:
+      enabled:
+        - cyan-skillfish-governor-smu.service
+
+  - type: signing

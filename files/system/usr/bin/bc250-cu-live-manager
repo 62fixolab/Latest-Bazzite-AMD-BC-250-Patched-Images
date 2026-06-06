@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+exec /usr/share/bc250-40cu/vendor/bc250-cu-live-manager/bc250-cu-live-manager.sh "$@"
