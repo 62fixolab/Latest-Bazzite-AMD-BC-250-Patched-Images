@@ -135,6 +135,8 @@ The `-40cu` images are separate from the stable images above:
 | GNOME 40CU | `ghcr.io/ublue-os/bazzite-gnome:stable` | `ghcr.io/62fixolab/bazzite-bc250-patched-gnome-40cu:latest` |
 | KDE 40CU | `ghcr.io/ublue-os/bazzite:stable` | `ghcr.io/62fixolab/bazzite-bc250-patched-kde-40cu:latest` |
 
+The workflow also keeps branch/version tags such as `br-40cu-43` or `br-40cu-44` for traceability, but `latest` is the intended install tag.
+
 These images include:
 
 - `bc250-cu-live-manager` for runtime WGP/CU dispatch control through UMR.

@@ -197,6 +197,53 @@ jobs:
           CLICOLOR_FORCE: "1"
         run: bluebuild build -v "recipes/${{ matrix.recipe }}"
 
+      - name: Publish latest 40CU tag
+        env:
+          GHCR_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          case "${{ matrix.recipe }}" in
+            bazzite-deck-patched-40cu.yml)
+              image="ghcr.io/${{ github.repository_owner }}/bazzite-bc250-patched-deck-40cu"
+              ;;
+            bazzite-gnome-patched-40cu.yml)
+              image="ghcr.io/${{ github.repository_owner }}/bazzite-bc250-patched-gnome-40cu"
+              ;;
+            bazzite-kde-patched-40cu.yml)
+              image="ghcr.io/${{ github.repository_owner }}/bazzite-bc250-patched-kde-40cu"
+              ;;
+            *)
+              echo "Unknown 40CU recipe: ${{ matrix.recipe }}" >&2
+              exit 1
+              ;;
+          esac
+
+          branch_tag="$(
+            printf '%s' "${GITHUB_REF_NAME}" \
+              | tr '[:upper:]' '[:lower:]' \
+              | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g'
+          )"
+          branch_tag="br-${branch_tag}"
+
+          echo "${GHCR_TOKEN}" | docker login ghcr.io \
+            --username "${{ github.repository_owner }}" \
+            --password-stdin
+
+          for os_version in 45 44 43 42; do
+            candidate="${image}:${branch_tag}-${os_version}"
+            if docker buildx imagetools inspect "${candidate}" >/dev/null 2>&1; then
+              docker buildx imagetools create \
+                --tag "${image}:latest" \
+                "${candidate}"
+              echo "Published ${image}:latest -> ${candidate}"
+              exit 0
+            fi
+          done
+
+          echo "Could not find a published branch tag for ${image}:${branch_tag}-<version>" >&2
+          exit 1
+
   save-base-digests:
     name: Save Bazzite stable digest cache
     needs:
