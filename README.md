@@ -12,6 +12,7 @@
 ## Table of Contents
 
 - [Bazzite AMD BC-250 Patched Images for Deck, GNOME, and KDE](#bazzite-amd-bc-250-patched-images-for-deck-gnome-and-kde)
+  - [TL;DR](#tldr)
   - [Origin](#origin)
   - [Images](#images)
   - [Experimental 40CU images](#experimental-40cu-images)
@@ -38,6 +39,65 @@
 Bazzite images for AMD BC-250 boards. This repository builds Deck, GNOME, and KDE variants from the current official Bazzite stable base and adds `cyan-skillfish-governor-smu` for BC-250 GPU frequency scaling and the `655%` GPU usage telemetry fix.
 
 The `40cu` branch also builds separate experimental `-40cu` images. They include runtime 40CU unlock tooling, but they do not enable 40CU automatically at boot.
+
+## TL;DR
+
+Use the normal images if you only want current Bazzite stable for BC-250 with the modern SMU governor and the `655%` GPU usage fix.
+
+Use the `-40cu` images if you want to test the experimental runtime 40CU unlock. The `-40cu` images only include the tooling; they boot like normal Bazzite until you explicitly enable 40CU.
+
+The 40CU behavior is based on the original BC-250 40 CU re-enablement report and whitepaper from [`duggasco/bc250-40cu-unlock`](https://github.com/duggasco/bc250-40cu-unlock). This image packages the tooling and safe commands around that work; it does not claim the register research as original to this repository.
+
+| Goal | Image to use | What happens |
+| --- | --- | --- |
+| Stable BC-250 Bazzite | `bazzite-bc250-patched-deck`, `gnome`, or `kde` | Current Bazzite stable + `cyan-skillfish-governor-smu` |
+| Test 40CU manually | `bazzite-bc250-patched-deck-40cu`, `gnome-40cu`, or `kde-40cu` | Same base, plus optional 40CU runtime tools |
+| Keep 40CU after reboot | Any `-40cu` image + `ujust bc250-cu-save-boot` | Reapplies the saved WGP table on boot |
+| Back out safely | `ujust bc250-cu-restore-24`, `ujust bc250-cu-disable-boot`, or `rpm-ostree rollback` | Returns to factory dispatch or previous deployment |
+
+Deck example:
+
+```bash
+# Install the experimental 40CU Deck image
+rpm-ostree rebase ostree-image-signed:docker://ghcr.io/62fixolab/bazzite-bc250-patched-deck-40cu:latest
+systemctl reboot
+```
+
+After reboot:
+
+```bash
+# Check current state
+ujust bc250-cu-status
+
+# Preview 40CU writes without applying them
+ujust bc250-cu-dry-run-40
+
+# Enable 40CU until the next reboot
+ujust bc250-cu-enable-40
+
+# Optional conservative governor profile for 40CU testing
+ujust bc250-cu-sweet-spot
+```
+
+Only persist 40CU after you have tested that your board is stable:
+
+```bash
+ujust bc250-cu-save-boot
+```
+
+Useful rollback commands:
+
+```bash
+# Return to factory 24CU dispatch live
+ujust bc250-cu-restore-24
+
+# Remove saved 40CU boot restore
+ujust bc250-cu-disable-boot
+
+# Return to the normal Deck image
+rpm-ostree rebase ostree-image-signed:docker://ghcr.io/62fixolab/bazzite-bc250-patched-deck:latest
+systemctl reboot
+```
 
 ## Origin
 
@@ -78,7 +138,7 @@ The `-40cu` images are separate from the stable images above:
 These images include:
 
 - `bc250-cu-live-manager` for runtime WGP/CU dispatch control through UMR.
-- The technical material from [`duggasco/bc250-40cu-unlock`](https://github.com/duggasco/bc250-40cu-unlock).
+- The original 40CU technical report, whitepaper, patch, and scripts from [`duggasco/bc250-40cu-unlock`](https://github.com/duggasco/bc250-40cu-unlock).
 - Short `ujust` commands for testing, applying, persisting, and reverting the 40CU setup.
 - A conservative governor helper for the documented 1500 MHz / 900 mV 40CU sweet spot.
 
@@ -320,5 +380,7 @@ Then review the diff before building. Local wrappers live outside `vendor/`, so 
 - [Bazzite Sunshine documentation](https://docs.bazzite.gg/Advanced/sunshine/)
 - [`filippor/cyan-skillfish-governor`](https://github.com/filippor/cyan-skillfish-governor)
 - [`duggasco/bc250-40cu-unlock`](https://github.com/duggasco/bc250-40cu-unlock)
+- [`duggasco/bc250-40cu-unlock` technical report](https://github.com/duggasco/bc250-40cu-unlock/blob/main/docs/technical-report.md)
+- [`duggasco/bc250-40cu-unlock` whitepaper](https://github.com/duggasco/bc250-40cu-unlock/blob/main/docs/whitepaper-cu-unlock.pdf)
 - [`WinnieLV/bc250-cu-live-manager`](https://github.com/WinnieLV/bc250-cu-live-manager)
 - [`elektricM/amd-bc250-docs`](https://github.com/elektricM/amd-bc250-docs)
