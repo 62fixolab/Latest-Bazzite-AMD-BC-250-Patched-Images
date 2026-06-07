@@ -11,16 +11,25 @@
 
 ## Table of Contents
 
-- [What is this?](#what-is-this)
-- [Documentation](#documentation)
-- [Which image should I use?](#which-image-should-i-use)
-- [Install](#install)
-- [After install](#after-install)
-- [Experimental 40CU images](#experimental-40cu-images)
-- [Common fixes](#common-fixes)
-- [Updates and rollback](#updates-and-rollback)
-- [What changed from vietsman](#what-changed-from-vietsman)
-- [References](#references)
+- [🎉 Sponsors](#-sponsors)
+  - [Printer Tools App](#printer-tools-app)
+  - [Scooter Tools App](#scooter-tools-app)
+  - [AdMate App](#admate-app)
+- [Bazzite AMD BC-250 Patched Images for Deck, GNOME, and KDE](#bazzite-amd-bc-250-patched-images-for-deck-gnome-and-kde)
+  - [What is this?](#what-is-this)
+  - [Documentation](#documentation)
+  - [Which image should I use?](#which-image-should-i-use)
+  - [Install](#install)
+  - [After install](#after-install)
+  - [Experimental 40CU images](#experimental-40cu-images)
+  - [Common fixes](#common-fixes)
+    - [Old COPR causes 404 during rebase](#old-copr-causes-404-during-rebase)
+    - [Deck UI micro-stutter](#deck-ui-micro-stutter)
+    - [Sunshine crashes](#sunshine-crashes)
+    - [Temperature sensors](#temperature-sensors)
+  - [Updates and rollback](#updates-and-rollback)
+  - [What changed from vietsman](#what-changed-from-vietsman)
+  - [References](#references)
 
 # Bazzite AMD BC-250 Patched Images for Deck, GNOME, and KDE
 
