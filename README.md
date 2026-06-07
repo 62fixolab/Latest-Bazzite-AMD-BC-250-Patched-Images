@@ -23,7 +23,9 @@
   - [Sunshine crashes](#sunshine-crashes)
   - [Temperature sensors](#temperature-sensors)
 - [Updates and rollback](#updates-and-rollback)
-- [What changed from vietsman](#what-changed-from-vietsman)
+- [Comparisons](#comparisons)
+  - [Compared with vietsman's Bazzite images](#compared-with-vietsmans-bazzite-images)
+  - [Compared with duggasco's 40CU unlock research](#compared-with-duggascos-40cu-unlock-research)
 - [References](#references)
 
 # Bazzite AMD BC-250 Patched Images for Deck, GNOME, and KDE
@@ -239,7 +241,9 @@ rpm-ostree rollback
 systemctl reboot
 ```
 
-# What changed from vietsman
+# Comparisons
+
+## Compared with vietsman's Bazzite images
 
 This repository continues the idea from:
 
@@ -257,6 +261,23 @@ This repository continues the idea from:
 | Rebuilds | Weekly | Only when Bazzite stable changes |
 | Signing | vietsman signed images | This repo's signed images |
 | Experimental 40CU | Not included | Separate `-40cu` images |
+
+## Compared with duggasco's 40CU unlock research
+
+This repository also packages tooling and documentation from [`duggasco/bc250-40cu-unlock`](https://github.com/duggasco/bc250-40cu-unlock). The original research remains the source of the 40CU register work.
+
+| Area | `duggasco/bc250-40cu-unlock` | This repo |
+| --- | --- | --- |
+| Purpose | Research, whitepaper, patches, and scripts for BC-250 40CU unlock | Ready-to-rebase Bazzite images that include optional runtime 40CU tooling |
+| Operating system | General Linux/Fedora-oriented tooling and documentation | Bazzite Deck, GNOME, and KDE images |
+| Install flow | User reads docs and runs/builds the unlock tooling manually | User rebases to a `-40cu` image and uses short `ujust` commands |
+| Kernel/module approach | Documents patched `amdgpu` and lower-level enable paths | Does not ship an always-on patched `amdgpu`; uses runtime WGP dispatch tooling |
+| Runtime manager | External/community tooling | `bc250-cu-live-manager` included in the image |
+| Governor profile | Documents the 1500 MHz / 900 mV 40CU sweet spot | Adds `ujust bc250-cu-sweet-spot` helper |
+| Persistence | Documented as part of the unlock workflow | `ujust bc250-cu-save-boot` saves and replays the selected WGP table |
+| Recovery | User follows upstream recovery steps | README and [docs/40cu.md](docs/40cu.md) include 24CU rollback commands |
+| Stability guarantee | Warns that some boards can have faulty CUs | Same warning; 32CU/40CU is treated as silicon lottery |
+| Credit | Original 40CU research source | Credits and vendors upstream research/tooling; does not claim it as original |
 
 # References
 
