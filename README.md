@@ -11,31 +11,24 @@
 
 ## Table of Contents
 
-- [🎉 Sponsors](#-sponsors)
-  - [Printer Tools App](#printer-tools-app)
-  - [Scooter Tools App](#scooter-tools-app)
-  - [AdMate App](#admate-app)
 - [Bazzite AMD BC-250 Patched Images for Deck, GNOME, and KDE](#bazzite-amd-bc-250-patched-images-for-deck-gnome-and-kde)
-  - [What is this?](#what-is-this)
-  - [Documentation](#documentation)
-  - [Which image should I use?](#which-image-should-i-use)
-  - [Install](#install)
-  - [After install](#after-install)
-  - [Experimental 40CU images](#experimental-40cu-images)
-  - [Common fixes](#common-fixes)
-    - [Old COPR causes 404 during rebase](#old-copr-causes-404-during-rebase)
-    - [Deck UI micro-stutter](#deck-ui-micro-stutter)
-    - [Sunshine crashes](#sunshine-crashes)
-    - [Temperature sensors](#temperature-sensors)
-  - [Updates and rollback](#updates-and-rollback)
-  - [What changed from vietsman](#what-changed-from-vietsman)
-  - [References](#references)
+- [Documentation](#documentation)
+- [Which image should I use?](#which-image-should-i-use)
+- [Install](#install)
+- [After install](#after-install)
+- [Experimental 40CU images](#experimental-40cu-images)
+- [Common fixes](#common-fixes)
+  - [Old COPR causes 404 during rebase](#old-copr-causes-404-during-rebase)
+  - [Deck UI micro-stutter](#deck-ui-micro-stutter)
+  - [Sunshine crashes](#sunshine-crashes)
+  - [Temperature sensors](#temperature-sensors)
+- [Updates and rollback](#updates-and-rollback)
+- [What changed from vietsman](#what-changed-from-vietsman)
+- [References](#references)
 
 # Bazzite AMD BC-250 Patched Images for Deck, GNOME, and KDE
 
 [![Build Bazzite BC-250](https://github.com/62fixolab/Latest-Bazzite-AMD-BC-250-Patched-Images/actions/workflows/build.yml/badge.svg)](https://github.com/62fixolab/Latest-Bazzite-AMD-BC-250-Patched-Images/actions/workflows/build.yml)
-
-## What is this?
 
 Current Bazzite images for AMD BC-250 boards. This is not a Bazzite fork; it is current official Bazzite `stable` plus BC-250-specific setup.
 
@@ -49,7 +42,7 @@ They use the official Bazzite `stable` base and add the BC-250 pieces most users
 > [!TIP]
 > If you only want a working BC-250 gaming setup, use the normal image for your desktop. You do not need the experimental `-40cu` image.
 
-## Documentation
+# Documentation
 
 Start here and only open the advanced guide if you are testing the experimental CU unlock.
 
@@ -64,7 +57,7 @@ Start here and only open the advanced guide if you are testing the experimental 
 > [!IMPORTANT]
 > The complete 40CU documentation is in [docs/40cu.md](docs/40cu.md). The README only keeps the short version so new users do not have to read the experimental details to install a normal image.
 
-## Which image should I use?
+# Which image should I use?
 
 | You want | Use this |
 | --- | --- |
@@ -84,7 +77,7 @@ Published images:
 > [!IMPORTANT]
 > The normal images are the recommended choice. The `-40cu` images are for testing only and do not guarantee that your board will be stable with extra CUs enabled.
 
-## Install
+# Install
 
 > [!IMPORTANT]
 > This assumes your BC-250 already works on stock Bazzite. Recommended baseline: modified BIOS, 512 MB dynamic VRAM, IOMMU disabled, enough cooling, and a PSU with enough 12 V headroom.
@@ -114,7 +107,7 @@ systemctl reboot
 > [!NOTE]
 > The images are signed with cosign and include the signing policy needed for `ostree-image-signed`.
 
-## After install
+# After install
 
 Check that you are on the expected image:
 
@@ -139,7 +132,7 @@ for f in /sys/class/drm/card*/device/pp_dpm_sclk; do echo "$f"; cat "$f"; done
 
 MangoHud/radeontop should now show normal GPU usage instead of `655%`.
 
-## Experimental 40CU images
+# Experimental 40CU images
 
 This is the short version. The full testing guide is here: [docs/40cu.md](docs/40cu.md).
 
@@ -178,9 +171,9 @@ ujust bc250-cu-restore-24
 
 Open [docs/40cu.md](docs/40cu.md) for the full test order, status interpretation, 32CU fallback, boot persistence, and recovery commands.
 
-## Common fixes
+# Common fixes
 
-### Old COPR causes 404 during rebase
+## Old COPR causes 404 during rebase
 
 Disable the old patched-kernel repo:
 
@@ -189,7 +182,7 @@ sudo mkdir -p /etc/yum.repos.d.disabled
 sudo mv /etc/yum.repos.d/*vietsman*patched-kernel-bc250*.repo /etc/yum.repos.d.disabled/ 2>/dev/null || true
 ```
 
-### Deck UI micro-stutter
+## Deck UI micro-stutter
 
 If the Handheld Daemon restarts repeatedly on Deck UI:
 
@@ -198,7 +191,7 @@ sudo systemctl disable --now hhd
 sudo systemctl mask hhd
 ```
 
-### Sunshine crashes
+## Sunshine crashes
 
 First reinstall the Bazzite integration:
 
@@ -219,7 +212,7 @@ journalctl --user -u homebrew.sunshine.service -b -f
 
 Then open `https://localhost:47990` or `https://<host-ip>:47990`.
 
-### Temperature sensors
+## Temperature sensors
 
 For read-only monitoring:
 
@@ -229,7 +222,7 @@ echo 'options nct6683 force=true' | sudo tee /etc/modprobe.d/sensors.conf
 systemctl reboot
 ```
 
-## Updates and rollback
+# Updates and rollback
 
 Images are checked daily against official Bazzite `stable` base digests. If Bazzite stable changes, GitHub Actions rebuilds the patched images.
 
@@ -246,7 +239,7 @@ rpm-ostree rollback
 systemctl reboot
 ```
 
-## What changed from vietsman
+# What changed from vietsman
 
 This repository continues the idea from:
 
@@ -265,7 +258,7 @@ This repository continues the idea from:
 | Signing | vietsman signed images | This repo's signed images |
 | Experimental 40CU | Not included | Separate `-40cu` images |
 
-## References
+# References
 
 - [Bazzite updates, rollbacks, and rebasing](https://docs.bazzite.gg/Installing_and_Managing_Software/Updates_Rollbacks_and_Rebasing/)
 - [Bazzite ujust commands](https://docs.bazzite.gg/Installing_and_Managing_Software/ujust/)
