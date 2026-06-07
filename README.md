@@ -11,16 +11,16 @@
 
 ## Table of Contents
 
-- [Bazzite AMD BC-250 Patched Images for Deck, GNOME, and KDE](#bazzite-amd-bc-250-patched-images-for-deck-gnome-and-kde)
-  - [What is this?](#what-is-this)
-  - [Which image should I use?](#which-image-should-i-use)
-  - [Install](#install)
-  - [After install](#after-install)
-  - [Experimental 40CU images](#experimental-40cu-images)
-  - [Common fixes](#common-fixes)
-  - [Updates and rollback](#updates-and-rollback)
-  - [What changed from vietsman](#what-changed-from-vietsman)
-  - [References](#references)
+- [What is this?](#what-is-this)
+- [Documentation](#documentation)
+- [Which image should I use?](#which-image-should-i-use)
+- [Install](#install)
+- [After install](#after-install)
+- [Experimental 40CU images](#experimental-40cu-images)
+- [Common fixes](#common-fixes)
+- [Updates and rollback](#updates-and-rollback)
+- [What changed from vietsman](#what-changed-from-vietsman)
+- [References](#references)
 
 # Bazzite AMD BC-250 Patched Images for Deck, GNOME, and KDE
 
@@ -39,6 +39,21 @@ They use the official Bazzite `stable` base and add the BC-250 pieces most users
 
 > [!TIP]
 > If you only want a working BC-250 gaming setup, use the normal image for your desktop. You do not need the experimental `-40cu` image.
+
+## Documentation
+
+Start here and only open the advanced guide if you are testing the experimental CU unlock.
+
+| Need | Read |
+| --- | --- |
+| Install Deck, GNOME, or KDE | This README |
+| Check the image after install | [After install](#after-install) |
+| Fix common BC-250 issues | [Common fixes](#common-fixes) |
+| Test 32CU/40CU unlock | [Experimental 40CU Guide](docs/40cu.md) |
+| Understand the original 40CU research | [`duggasco/bc250-40cu-unlock`](https://github.com/duggasco/bc250-40cu-unlock) |
+
+> [!IMPORTANT]
+> The complete 40CU documentation is in [docs/40cu.md](docs/40cu.md). The README only keeps the short version so new users do not have to read the experimental details to install a normal image.
 
 ## Which image should I use?
 
@@ -117,6 +132,8 @@ MangoHud/radeontop should now show normal GPU usage instead of `655%`.
 
 ## Experimental 40CU images
 
+This is the short version. The full testing guide is here: [docs/40cu.md](docs/40cu.md).
+
 The `40cu` branch builds separate experimental images:
 
 | Variant | Image |
@@ -150,7 +167,7 @@ ujust bc250-cu-restore-24
 > [!WARNING]
 > Do not run `ujust bc250-cu-save-boot` until you have tested games or benchmarks and confirmed that your board is stable.
 
-Full 40CU instructions live here: [docs/40cu.md](docs/40cu.md).
+Open [docs/40cu.md](docs/40cu.md) for the full test order, status interpretation, 32CU fallback, boot persistence, and recovery commands.
 
 ## Common fixes
 
