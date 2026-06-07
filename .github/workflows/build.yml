@@ -127,7 +127,7 @@ jobs:
   bluebuild_40cu:
     name: Build Custom 40CU Image
     needs: base-digests
-    if: needs.base-digests.outputs.should-build == 'true' && github.ref_name == '40cu'
+    if: needs.base-digests.outputs.should-build == 'true' && (github.ref_name == github.event.repository.default_branch || github.ref_name == '40cu')
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -198,6 +198,7 @@ jobs:
         run: bluebuild build -v "recipes/${{ matrix.recipe }}"
 
       - name: Publish latest 40CU tag
+        if: github.ref_name == '40cu'
         env:
           GHCR_TOKEN: ${{ github.token }}
         run: |

@@ -138,7 +138,7 @@ MangoHud/radeontop should now show normal GPU usage instead of `655%`.
 
 This is the short version. The full testing guide is here: [docs/40cu.md](docs/40cu.md).
 
-The `40cu` branch builds separate experimental images:
+The repository also builds separate experimental `-40cu` images:
 
 | Variant | Image |
 | --- | --- |
