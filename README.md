@@ -171,7 +171,7 @@ ujust bc250-cu-restore-24
 > [!WARNING]
 > Do not run `ujust bc250-cu-save-boot` until you have tested games or benchmarks and confirmed that your board is stable.
 
-Open [docs/40cu.md](docs/40cu.md) for the full test order, status interpretation, 32CU fallback, boot persistence, and recovery commands.
+Open [docs/40cu.md](docs/40cu.md) for the full test order, iterative WGP testing, a real 36CU example, status interpretation, boot persistence, and recovery commands.
 
 # Common fixes
 
