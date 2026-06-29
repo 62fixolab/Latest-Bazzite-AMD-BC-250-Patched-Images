@@ -269,3 +269,37 @@ jobs:
         with:
           path: .base-image-digests
           key: ${{ needs.base-digests.outputs.cache-key }}
+
+  publish-release:
+    name: Publish GitHub Release
+    needs:
+      - base-digests
+      - bluebuild
+      - bluebuild_40cu
+    if: needs.base-digests.outputs.should-build == 'true' && github.ref_name == github.event.repository.default_branch && needs.bluebuild.result == 'success' && needs.bluebuild_40cu.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Publish grouped release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+
+          release_date="$(date -u +%Y.%m.%d)"
+
+          scripts/publish-release.sh \
+            --date "${release_date}" \
+            --owner "${{ github.repository_owner }}" \
+            --repo "${{ github.event.repository.name }}" \
+            --target "${GITHUB_SHA}" \
+            --run-url "${RUN_URL}" \
+            --publish
