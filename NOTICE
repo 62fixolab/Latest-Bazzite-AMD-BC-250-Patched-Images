@@ -1,0 +1,41 @@
+Bazzite AMD BC-250 Patched Images
+Copyright 2026 FixoLab
+
+This repository's original files are licensed under the Apache License,
+Version 2.0, unless a file or vendored directory states otherwise.
+
+This project builds on and/or packages work from the following projects:
+
+- Bazzite
+  https://github.com/ublue-os/bazzite
+  License: Apache License 2.0
+
+- vietsman Bazzite BC-250 patched images
+  https://github.com/vietsman/bazzite-deck-patched
+  https://github.com/vietsman/bazzite-gnome-patched
+  https://github.com/vietsman/bazzite-kde-patched
+  License: Apache License 2.0
+
+- cyan-skillfish-governor
+  https://github.com/filippor/cyan-skillfish-governor
+  License: MIT License
+  Note: installed from COPR; not vendored as source in this repository.
+
+- bc250-40cu-unlock
+  https://github.com/duggasco/bc250-40cu-unlock
+  Upstream declared license: GPL-2.0
+  Vendored paths:
+    vendor/bc250-40cu-unlock/
+    files/system/usr/share/bc250-40cu/vendor/bc250-40cu-unlock/
+
+- bc250-cu-live-manager
+  https://github.com/WinnieLV/bc250-cu-live-manager
+  Upstream declared license: none detected at time of review.
+  Vendored paths:
+    vendor/bc250-cu-live-manager/
+    files/system/usr/share/bc250-40cu/vendor/bc250-cu-live-manager/
+
+The experimental 40CU images include third-party research/tooling for BC-250
+runtime CU testing. Those third-party files remain subject to their upstream
+authors' licensing terms and notices.
+

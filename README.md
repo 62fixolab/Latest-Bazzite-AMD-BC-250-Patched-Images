@@ -27,6 +27,7 @@
   - [Compared with vietsman's Bazzite images](#compared-with-vietsmans-bazzite-images)
   - [Compared with duggasco's 40CU unlock research](#compared-with-duggascos-40cu-unlock-research)
 - [References](#references)
+- [License](#license)
 
 # Bazzite AMD BC-250 Patched Images for Deck, GNOME, and KDE
 
@@ -288,3 +289,9 @@ This repository also packages tooling and documentation from [`duggasco/bc250-40
 - [`duggasco/bc250-40cu-unlock`](https://github.com/duggasco/bc250-40cu-unlock)
 - [`WinnieLV/bc250-cu-live-manager`](https://github.com/WinnieLV/bc250-cu-live-manager)
 - [`elektricM/amd-bc250-docs`](https://github.com/elektricM/amd-bc250-docs)
+
+# License
+
+This repository's original files are licensed under the Apache License 2.0. See [LICENSE](LICENSE).
+
+Third-party projects and vendored 40CU tooling keep their upstream licensing and attribution. See [NOTICE](NOTICE).
