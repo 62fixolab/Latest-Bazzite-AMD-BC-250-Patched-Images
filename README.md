@@ -292,6 +292,6 @@ This repository also packages tooling and documentation from [`duggasco/bc250-40
 
 # License
 
-This repository's original files are licensed under the Apache License 2.0. See [LICENSE](LICENSE).
+This repository's original files are licensed under the MIT License. See [LICENSE](LICENSE).
 
 Third-party projects and vendored 40CU tooling keep their upstream licensing and attribution. See [NOTICE](NOTICE).
