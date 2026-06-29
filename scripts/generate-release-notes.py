@@ -16,31 +16,37 @@ from pathlib import Path
 PACKAGES = [
     {
         "group": "recommended",
+        "family": "Deck",
         "variant": "Deck / Game Mode",
         "name": "bazzite-bc250-patched-deck",
     },
     {
         "group": "recommended",
+        "family": "GNOME",
         "variant": "GNOME",
         "name": "bazzite-bc250-patched-gnome",
     },
     {
         "group": "recommended",
+        "family": "KDE",
         "variant": "KDE",
         "name": "bazzite-bc250-patched-kde",
     },
     {
         "group": "experimental",
+        "family": "Deck",
         "variant": "Deck / Game Mode 40CU",
         "name": "bazzite-bc250-patched-deck-40cu",
     },
     {
         "group": "experimental",
+        "family": "GNOME",
         "variant": "GNOME 40CU",
         "name": "bazzite-bc250-patched-gnome-40cu",
     },
     {
         "group": "experimental",
+        "family": "KDE",
         "variant": "KDE 40CU",
         "name": "bazzite-bc250-patched-kde-40cu",
     },
@@ -142,6 +148,7 @@ def collect_entries(owner: str, date_ymd: str, retries: int, retry_delay: int) -
                     **package,
                     "exact_tag": exact_tag,
                     "os_version": os_version,
+                    "base_version": f"F{os_version}.{date_ymd}",
                     "digest": digest,
                     "created_at": version.get("created_at", ""),
                     "commit_tag": commit_tags[-1] if commit_tags else "",
@@ -201,19 +208,39 @@ def install_block(owner: str, entry: dict, tag: str) -> str:
 
 def markdown_table(entries: list[dict], owner: str, repo_url: str) -> str:
     lines = [
-        "| Variant | Image | Exact tag | Digest |",
-        "| --- | --- | --- | --- |",
+        "| Variant | Bazzite base | Image | Exact tag | Digest |",
+        "| --- | --- | --- | --- | --- |",
     ]
 
     for entry in entries:
         image = f"ghcr.io/{owner}/{entry['name']}"
         package_link = package_url(repo_url, entry["name"])
         lines.append(
-            f"| {entry['variant']} | [`{image}`]({package_link}) | "
+            f"| {entry['variant']} | `{entry['base_version']}` | [`{image}`]({package_link}) | "
             f"`{entry['exact_tag']}` | `{entry['digest']}` |"
         )
 
     return "\n".join(lines)
+
+
+def base_version_summary(entries: list[dict]) -> str:
+    family_order = ["Deck", "GNOME", "KDE"]
+    grouped: dict[str, set[str]] = {}
+
+    for entry in entries:
+        grouped.setdefault(entry["base_version"], set()).add(entry["family"])
+
+    def sort_key(item: tuple[str, set[str]]) -> tuple[int, str]:
+        base_version, families = item
+        ordered_families = [family_order.index(family) for family in families if family in family_order]
+        return (min(ordered_families) if ordered_families else 99, base_version)
+
+    parts: list[str] = []
+    for base_version, families in sorted(grouped.items(), key=sort_key):
+        label = "/".join(family for family in family_order if family in families)
+        parts.append(f"{label} `{base_version}`")
+
+    return "; ".join(parts)
 
 
 def render_notes(
@@ -242,6 +269,7 @@ def render_notes(
         "## What changed",
         "",
         "- Rebuilt from current official Bazzite stable bases.",
+        f"- Bazzite base versions: {base_version_summary(entries)}.",
         "- Published normal Deck, GNOME, and KDE images.",
     ]
 
