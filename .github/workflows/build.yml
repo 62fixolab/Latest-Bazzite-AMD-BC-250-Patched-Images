@@ -6,6 +6,12 @@ on:
     paths-ignore:
       - "**.md"
   workflow_dispatch:
+    inputs:
+      force_build:
+        description: "Build packages even if Bazzite stable digests did not change"
+        required: false
+        type: boolean
+        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
@@ -21,7 +27,7 @@ jobs:
       deck-digest: ${{ steps.base-digests.outputs.deck-digest }}
       gnome-digest: ${{ steps.base-digests.outputs.gnome-digest }}
       kde-digest: ${{ steps.base-digests.outputs.kde-digest }}
-      should-build: ${{ github.event_name != 'schedule' || steps.base-digest-cache.outputs.cache-hit != 'true' }}
+      should-build: ${{ steps.base-digest-cache.outputs.cache-hit != 'true' || (github.event_name == 'workflow_dispatch' && inputs.force_build == true) }}
     steps:
       - name: Resolve base image digests
         id: base-digests

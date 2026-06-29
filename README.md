@@ -229,6 +229,9 @@ systemctl reboot
 
 Images are checked daily against official Bazzite `stable` base digests. If Bazzite stable changes, GitHub Actions rebuilds the patched images.
 
+> [!NOTE]
+> Commits to this repository do not rebuild packages by themselves when the Bazzite `stable` digests are unchanged. A manual workflow run can still force a rebuild if needed.
+
 Update normally:
 
 ```bash
