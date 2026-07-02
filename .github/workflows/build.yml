@@ -126,6 +126,7 @@ jobs:
       id-token: write
     strategy:
       fail-fast: false
+      max-parallel: 1
       matrix: ${{ fromJson(needs.base-digests.outputs.normal-matrix) }}
     steps:
       - name: Checkout repository
@@ -203,6 +204,7 @@ jobs:
       id-token: write
     strategy:
       fail-fast: false
+      max-parallel: 1
       matrix: ${{ fromJson(needs.base-digests.outputs.fortycu-matrix) }}
     steps:
       - name: Checkout repository
