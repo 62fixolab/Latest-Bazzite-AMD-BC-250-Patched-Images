@@ -31,6 +31,11 @@ jobs:
       fortycu-count: ${{ steps.build-plan.outputs.fortycu-count }}
       should-build: ${{ steps.build-plan.outputs.should-build }}
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6.0.2
+        with:
+          persist-credentials: false
+
       - name: Resolve base image digests
         id: base-digests
         run: |
