@@ -13,43 +13,72 @@ import time
 from pathlib import Path
 
 
-PACKAGES = [
+CHANNELS = [
     {
-        "group": "recommended",
+        "channel": "stable",
+        "label": "Stable",
+        "suffix": "",
+    },
+    {
+        "channel": "testing",
+        "label": "Testing",
+        "suffix": "-testing",
+    },
+    {
+        "channel": "unstable",
+        "label": "Unstable",
+        "suffix": "-unstable",
+    },
+]
+
+BASE_PACKAGES = [
+    {
+        "kind": "normal",
         "family": "Deck",
         "variant": "Deck / Game Mode",
         "name": "bazzite-bc250-patched-deck",
     },
     {
-        "group": "recommended",
+        "kind": "normal",
         "family": "GNOME",
         "variant": "GNOME",
         "name": "bazzite-bc250-patched-gnome",
     },
     {
-        "group": "recommended",
+        "kind": "normal",
         "family": "KDE",
         "variant": "KDE",
         "name": "bazzite-bc250-patched-kde",
     },
     {
-        "group": "experimental",
+        "kind": "40cu",
         "family": "Deck",
         "variant": "Deck / Game Mode 40CU",
         "name": "bazzite-bc250-patched-deck-40cu",
     },
     {
-        "group": "experimental",
+        "kind": "40cu",
         "family": "GNOME",
         "variant": "GNOME 40CU",
         "name": "bazzite-bc250-patched-gnome-40cu",
     },
     {
-        "group": "experimental",
+        "kind": "40cu",
         "family": "KDE",
         "variant": "KDE 40CU",
         "name": "bazzite-bc250-patched-kde-40cu",
     },
+]
+
+PACKAGES = [
+    {
+        **base_package,
+        "channel": channel["channel"],
+        "channel_label": channel["label"],
+        "name": f"{base_package['name']}{channel['suffix']}",
+    }
+    for channel in CHANNELS
+    for base_package in BASE_PACKAGES
 ]
 
 SPONSORS = """# 🎉 Sponsors
@@ -89,6 +118,9 @@ def run_json(command: list[str], retries: int, retry_delay: int) -> object:
             return json.loads(proc.stdout)
 
         last_error = proc.stderr.strip() or proc.stdout.strip()
+        if "HTTP 404" in last_error or "Not Found" in last_error:
+            raise FileNotFoundError(last_error)
+
         if attempt < retries:
             time.sleep(retry_delay)
 
@@ -102,12 +134,18 @@ def fetch_package_versions(owner: str, package: str, retries: int, retry_delay: 
         path = f"/{scope}/{owner}/packages/container/{package}/versions?per_page=100"
         try:
             data = run_json(["gh", "api", path], retries, retry_delay)
+        except FileNotFoundError as exc:
+            errors.append(str(exc))
+            continue
         except RuntimeError as exc:
             errors.append(str(exc))
             continue
 
         if isinstance(data, list):
             return data
+
+    if any("HTTP 404" in error or "Not Found" in error for error in errors):
+        return []
 
     raise RuntimeError("\n".join(errors))
 
@@ -224,23 +262,50 @@ def markdown_table(entries: list[dict], owner: str, repo_url: str) -> str:
 
 
 def base_version_summary(entries: list[dict]) -> str:
+    channel_order = ["stable", "testing", "unstable"]
+    channel_labels = {channel["channel"]: channel["label"] for channel in CHANNELS}
     family_order = ["Deck", "GNOME", "KDE"]
-    grouped: dict[str, set[str]] = {}
+    grouped: dict[str, dict[str, set[str]]] = {}
 
     for entry in entries:
-        grouped.setdefault(entry["base_version"], set()).add(entry["family"])
+        channel_group = grouped.setdefault(entry["channel"], {})
+        channel_group.setdefault(entry["base_version"], set()).add(entry["family"])
 
-    def sort_key(item: tuple[str, set[str]]) -> tuple[int, str]:
+    def base_sort_key(item: tuple[str, set[str]]) -> tuple[int, str]:
         base_version, families = item
         ordered_families = [family_order.index(family) for family in families if family in family_order]
         return (min(ordered_families) if ordered_families else 99, base_version)
 
     parts: list[str] = []
-    for base_version, families in sorted(grouped.items(), key=sort_key):
-        label = "/".join(family for family in family_order if family in families)
-        parts.append(f"{label} `{base_version}`")
+    for channel in channel_order:
+        if channel not in grouped:
+            continue
+
+        channel_parts: list[str] = []
+        for base_version, families in sorted(grouped[channel].items(), key=base_sort_key):
+            label = "/".join(family for family in family_order if family in families)
+            channel_parts.append(f"{label} `{base_version}`")
+
+        parts.append(f"{channel_labels[channel]}: {', '.join(channel_parts)}")
 
     return "; ".join(parts)
+
+
+def channel_labels_for_entries(entries: list[dict]) -> str:
+    channel_order = [channel["channel"] for channel in CHANNELS]
+    channel_labels = {channel["channel"]: channel["label"] for channel in CHANNELS}
+    present = {entry["channel"] for entry in entries}
+    return ", ".join(channel_labels[channel] for channel in channel_order if channel in present)
+
+
+def channel_entries(entries: list[dict], channel: str, kind: str) -> list[dict]:
+    return [entry for entry in entries if entry["channel"] == channel and entry["kind"] == kind]
+
+
+def family_summary(entries: list[dict]) -> str:
+    family_order = ["Deck", "GNOME", "KDE"]
+    present = {entry["family"] for entry in entries}
+    return ", ".join(family for family in family_order if family in present)
 
 
 def render_notes(
@@ -253,8 +318,8 @@ def render_notes(
     run_url: str | None,
 ) -> str:
     repo_url = f"https://github.com/{owner}/{repo}"
-    recommended = [entry for entry in entries if entry["group"] == "recommended"]
-    experimental = [entry for entry in entries if entry["group"] == "experimental"]
+    normal_entries = [entry for entry in entries if entry["kind"] == "normal"]
+    experimental_entries = [entry for entry in entries if entry["kind"] == "40cu"]
 
     lines: list[str] = [
         SPONSORS.rstrip(),
@@ -268,70 +333,93 @@ def render_notes(
         "",
         "## What changed",
         "",
-        "- Rebuilt from current official Bazzite stable bases.",
+        "- Rebuilt from updated official Bazzite channel bases.",
         f"- Bazzite base versions: {base_version_summary(entries)}.",
-        "- Published normal Deck, GNOME, and KDE images.",
+        f"- Published updated channels: {channel_labels_for_entries(entries)}.",
     ]
 
-    if experimental:
-        lines.append("- Published optional experimental `-40cu` images.")
+    if normal_entries:
+        lines.append(f"- Published updated normal images: {family_summary(normal_entries)}.")
+
+    if experimental_entries:
+        lines.append(f"- Published updated optional experimental `-40cu` images: {family_summary(experimental_entries)}.")
+
+    non_stable_channels = {entry["channel"] for entry in entries if entry["channel"] != "stable"}
+    if non_stable_channels:
+        lines.append("- Added separate Bazzite `testing`/`unstable` packages so users can test those channels without replacing stable `latest` packages.")
 
     lines.extend(
         [
             "- Includes `cyan-skillfish-governor-smu`, GPU frequency scaling, and the MangoHud/radeontop `655%` telemetry fix.",
             "- Images are signed for `ostree-image-signed` rebases.",
             "",
-            "## Recommended images",
-            "",
-            "Use these unless you are deliberately testing extra CUs." if experimental else "These are the images published in this batch.",
-            "",
-            markdown_table(recommended, owner, repo_url),
-            "",
-            "### Install recommended images",
-            "",
         ]
     )
 
-    for entry in recommended:
-        lines.append(install_block(owner, entry, "latest"))
-        lines.append("")
+    for channel in CHANNELS:
+        normal = channel_entries(entries, channel["channel"], "normal")
+        experimental = channel_entries(entries, channel["channel"], "40cu")
 
-    lines.extend(
-        [
-            "Pin this exact build by replacing `latest` with the exact tag from the table above.",
-            "",
-        ]
-    )
+        if normal:
+            section_name = "Recommended stable images" if channel["channel"] == "stable" else f"{channel['label']} images"
+            lines.extend(
+                [
+                    f"## {section_name}",
+                    "",
+                    "Use these unless you are deliberately testing extra CUs." if channel["channel"] == "stable" else "Use these only if you deliberately want this Bazzite update channel.",
+                    "",
+                    markdown_table(normal, owner, repo_url),
+                    "",
+                    f"### Install {channel['label'].lower()} images",
+                    "",
+                ]
+            )
 
-    if experimental:
-        lines.extend(
-            [
-                "## Experimental 40CU images",
-                "",
-                "> [!CAUTION]",
-                "> The `-40cu` images do not force 40CU on boot. They include tools to test extra CUs. 32CU/40CU stability is silicon lottery.",
-                "",
-                markdown_table(experimental, owner, repo_url),
-                "",
-                f"Full 40CU guide: {repo_url}/blob/main/docs/40cu.md",
-                "",
-                "### Install recommended experimental 40CU images",
-                "",
-                "Use these only if you want to test optional CU unlock tooling. For normal daily use, install one of the recommended non-40CU images above.",
-                "",
-            ]
-        )
+            for entry in normal:
+                lines.append(install_block(owner, entry, "latest"))
+                lines.append("")
 
-        for entry in experimental:
-            lines.append(install_block(owner, entry, "latest"))
-            lines.append("")
+            lines.extend(
+                [
+                    "Pin this exact build by replacing `latest` with the exact tag from the table above.",
+                    "",
+                ]
+            )
 
-        lines.extend(
-            [
-                "Pin this exact build by replacing `latest` with the exact tag from the table above.",
-                "",
-            ]
-        )
+        if experimental:
+            section_name = (
+                "Experimental stable 40CU images"
+                if channel["channel"] == "stable"
+                else f"Experimental {channel['label']} 40CU images"
+            )
+            lines.extend(
+                [
+                    f"## {section_name}",
+                    "",
+                    "> [!CAUTION]",
+                    "> The `-40cu` images do not force 40CU on boot. They include tools to test extra CUs. 32CU/40CU stability is silicon lottery.",
+                    "",
+                    markdown_table(experimental, owner, repo_url),
+                    "",
+                    f"Full 40CU guide: {repo_url}/blob/main/docs/40cu.md",
+                    "",
+                    f"### Install {channel['label'].lower()} experimental 40CU images",
+                    "",
+                    "Use these only if you want to test optional CU unlock tooling.",
+                    "",
+                ]
+            )
+
+            for entry in experimental:
+                lines.append(install_block(owner, entry, "latest"))
+                lines.append("")
+
+            lines.extend(
+                [
+                    "Pin this exact build by replacing `latest` with the exact tag from the table above.",
+                    "",
+                ]
+            )
 
     lines.extend(
         [
@@ -341,7 +429,7 @@ def render_notes(
         ]
     )
 
-    if experimental:
+    if experimental_entries:
         lines.extend(
             [
                 f"- Full 40CU guide: {repo_url}/blob/main/docs/40cu.md",

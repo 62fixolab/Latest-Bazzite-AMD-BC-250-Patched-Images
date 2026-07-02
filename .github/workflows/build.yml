@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       force_build:
-        description: "Build packages even if Bazzite stable digests did not change"
+        description: "Build packages even if Bazzite channel digests did not change"
         required: false
         type: boolean
         default: false
@@ -19,36 +19,66 @@ concurrency:
 
 jobs:
   base-digests:
-    name: Check Bazzite stable digests
+    name: Check Bazzite channel digests
     runs-on: ubuntu-latest
     outputs:
       cache-hit: ${{ steps.base-digest-cache.outputs.cache-hit }}
       cache-key: ${{ steps.base-digests.outputs.cache-key }}
-      deck-digest: ${{ steps.base-digests.outputs.deck-digest }}
-      gnome-digest: ${{ steps.base-digests.outputs.gnome-digest }}
-      kde-digest: ${{ steps.base-digests.outputs.kde-digest }}
-      should-build: ${{ steps.base-digest-cache.outputs.cache-hit != 'true' || (github.event_name == 'workflow_dispatch' && inputs.force_build == true) }}
+      digests-tsv: ${{ steps.base-digests.outputs.digests-tsv }}
+      normal-matrix: ${{ steps.build-plan.outputs.normal-matrix }}
+      normal-count: ${{ steps.build-plan.outputs.normal-count }}
+      fortycu-matrix: ${{ steps.build-plan.outputs.fortycu-matrix }}
+      fortycu-count: ${{ steps.build-plan.outputs.fortycu-count }}
+      should-build: ${{ steps.build-plan.outputs.should-build }}
     steps:
       - name: Resolve base image digests
         id: base-digests
         run: |
           mkdir -p .base-image-digests
+          mkdir -p .current-base-image-digests
+          : > .current-base-image-digests/digests.tsv
 
-          deck_digest="$(docker buildx imagetools inspect ghcr.io/ublue-os/bazzite-deck:stable | awk '/Digest:/ {print $2; exit}')"
-          gnome_digest="$(docker buildx imagetools inspect ghcr.io/ublue-os/bazzite-gnome:stable | awk '/Digest:/ {print $2; exit}')"
-          kde_digest="$(docker buildx imagetools inspect ghcr.io/ublue-os/bazzite:stable | awk '/Digest:/ {print $2; exit}')"
+          resolve_digest() {
+            docker buildx imagetools inspect "$1" | awk '/Digest:/ {print $2; exit}'
+          }
 
-          {
-            echo "deck=${deck_digest}"
-            echo "gnome=${gnome_digest}"
-            echo "kde=${kde_digest}"
-          } | tee .base-image-digests/digests.txt
+          for channel in stable testing unstable; do
+            for variant in deck gnome kde; do
+              case "$variant" in
+                deck)
+                  image="ghcr.io/ublue-os/bazzite-deck"
+                  ;;
+                gnome)
+                  image="ghcr.io/ublue-os/bazzite-gnome"
+                  ;;
+                kde)
+                  image="ghcr.io/ublue-os/bazzite"
+                  ;;
+              esac
 
-          cache_key="bazzite-stable-digests-$(sha256sum .base-image-digests/digests.txt | awk '{print $1}')"
+              ref="${image}:${channel}"
+              echo "Resolving ${ref}"
+              if digest="$(resolve_digest "${ref}")"; then
+                printf '%s\t%s\t%s\t%s\n' \
+                  "$channel" \
+                  "$variant" \
+                  "$image" \
+                  "$digest" >> .current-base-image-digests/digests.tsv
+              else
+                echo "::warning::Could not resolve ${ref}; skipping this channel/variant."
+              fi
+            done
+          done
+
+          cat .current-base-image-digests/digests.tsv
+
+          cache_key="bazzite-channel-digests-$(sha256sum .current-base-image-digests/digests.tsv | awk '{print $1}')"
           echo "cache-key=${cache_key}" >> "${GITHUB_OUTPUT}"
-          echo "deck-digest=${deck_digest}" >> "${GITHUB_OUTPUT}"
-          echo "gnome-digest=${gnome_digest}" >> "${GITHUB_OUTPUT}"
-          echo "kde-digest=${kde_digest}" >> "${GITHUB_OUTPUT}"
+          {
+            echo "digests-tsv<<EOF"
+            cat .current-base-image-digests/digests.tsv
+            echo "EOF"
+          } >> "${GITHUB_OUTPUT}"
 
       - name: Restore base digest cache
         id: base-digest-cache
@@ -56,11 +86,34 @@ jobs:
         with:
           path: .base-image-digests
           key: ${{ steps.base-digests.outputs.cache-key }}
+          restore-keys: |
+            bazzite-channel-digests-
+            bazzite-stable-digests-
+
+      - name: Prepare build matrices
+        id: build-plan
+        run: |
+          force_args=()
+          if [[ "${FORCE_BUILD}" == "true" ]]; then
+            force_args+=(--force)
+          fi
+
+          previous_file=".base-image-digests/digests.tsv"
+          if [[ ! -f "$previous_file" && -f ".base-image-digests/digests.txt" ]]; then
+            previous_file=".base-image-digests/digests.txt"
+          fi
+
+          scripts/prepare-build-matrices.py \
+            --current .current-base-image-digests/digests.tsv \
+            --previous "$previous_file" \
+            "${force_args[@]}"
+        env:
+          FORCE_BUILD: ${{ github.event_name == 'workflow_dispatch' && inputs.force_build == true }}
 
   bluebuild:
     name: Build Custom Image
     needs: base-digests
-    if: needs.base-digests.outputs.should-build == 'true' && github.ref_name != '40cu'
+    if: needs.base-digests.outputs.normal-count != '0' && github.ref_name != '40cu'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -68,11 +121,7 @@ jobs:
       id-token: write
     strategy:
       fail-fast: false
-      matrix:
-        recipe:
-          - bazzite-deck-patched.yml
-          - bazzite-gnome-patched.yml
-          - bazzite-kde-patched.yml
+      matrix: ${{ fromJson(needs.base-digests.outputs.normal-matrix) }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6.0.2
@@ -128,12 +177,20 @@ jobs:
           GH_PR_EVENT_NUMBER: ${{ github.event.number }}
           RUST_LOG_STYLE: always
           CLICOLOR_FORCE: "1"
-        run: bluebuild build -v "recipes/${{ matrix.recipe }}"
+        run: |
+          generated_recipe="recipes/.generated-${{ matrix.channel }}-${{ matrix.recipe }}"
+          scripts/render-channel-recipe.py \
+            --recipe "recipes/${{ matrix.recipe }}" \
+            --output "$generated_recipe" \
+            --channel "${{ matrix.channel }}" \
+            --name "${{ matrix.image_name }}"
+
+          bluebuild build -v "$generated_recipe"
 
   bluebuild_40cu:
     name: Build Custom 40CU Image
     needs: base-digests
-    if: needs.base-digests.outputs.should-build == 'true' && (github.ref_name == github.event.repository.default_branch || github.ref_name == '40cu')
+    if: needs.base-digests.outputs.fortycu-count != '0' && (github.ref_name == github.event.repository.default_branch || github.ref_name == '40cu')
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -141,11 +198,7 @@ jobs:
       id-token: write
     strategy:
       fail-fast: false
-      matrix:
-        recipe:
-          - bazzite-deck-patched-40cu.yml
-          - bazzite-gnome-patched-40cu.yml
-          - bazzite-kde-patched-40cu.yml
+      matrix: ${{ fromJson(needs.base-digests.outputs.fortycu-matrix) }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6.0.2
@@ -201,74 +254,35 @@ jobs:
           GH_PR_EVENT_NUMBER: ${{ github.event.number }}
           RUST_LOG_STYLE: always
           CLICOLOR_FORCE: "1"
-        run: bluebuild build -v "recipes/${{ matrix.recipe }}"
-
-      - name: Publish latest 40CU tag
-        if: github.ref_name == '40cu'
-        env:
-          GHCR_TOKEN: ${{ github.token }}
         run: |
-          set -euo pipefail
+          generated_recipe="recipes/.generated-${{ matrix.channel }}-${{ matrix.recipe }}"
+          scripts/render-channel-recipe.py \
+            --recipe "recipes/${{ matrix.recipe }}" \
+            --output "$generated_recipe" \
+            --channel "${{ matrix.channel }}" \
+            --name "${{ matrix.image_name }}"
 
-          case "${{ matrix.recipe }}" in
-            bazzite-deck-patched-40cu.yml)
-              image="ghcr.io/${{ github.repository_owner }}/bazzite-bc250-patched-deck-40cu"
-              ;;
-            bazzite-gnome-patched-40cu.yml)
-              image="ghcr.io/${{ github.repository_owner }}/bazzite-bc250-patched-gnome-40cu"
-              ;;
-            bazzite-kde-patched-40cu.yml)
-              image="ghcr.io/${{ github.repository_owner }}/bazzite-bc250-patched-kde-40cu"
-              ;;
-            *)
-              echo "Unknown 40CU recipe: ${{ matrix.recipe }}" >&2
-              exit 1
-              ;;
-          esac
-
-          branch_tag="$(
-            printf '%s' "${GITHUB_REF_NAME}" \
-              | tr '[:upper:]' '[:lower:]' \
-              | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g'
-          )"
-          branch_tag="br-${branch_tag}"
-
-          echo "${GHCR_TOKEN}" | docker login ghcr.io \
-            --username "${{ github.repository_owner }}" \
-            --password-stdin
-
-          for os_version in 45 44 43 42; do
-            candidate="${image}:${branch_tag}-${os_version}"
-            if docker buildx imagetools inspect "${candidate}" >/dev/null 2>&1; then
-              docker buildx imagetools create \
-                --tag "${image}:latest" \
-                "${candidate}"
-              echo "Published ${image}:latest -> ${candidate}"
-              exit 0
-            fi
-          done
-
-          echo "Could not find a published branch tag for ${image}:${branch_tag}-<version>" >&2
-          exit 1
+          bluebuild build -v "$generated_recipe"
 
   save-base-digests:
-    name: Save Bazzite stable digest cache
+    name: Save Bazzite channel digest cache
     needs:
       - base-digests
       - bluebuild
       - bluebuild_40cu
-    if: always() && needs.base-digests.outputs.cache-hit != 'true' && (needs.bluebuild.result == 'success' || needs.bluebuild_40cu.result == 'success')
+    if: always() && needs.base-digests.outputs.should-build == 'true' && (needs.bluebuild.result == 'success' || needs.bluebuild.result == 'skipped') && (needs.bluebuild_40cu.result == 'success' || needs.bluebuild_40cu.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
       - name: Record base image digests
         run: |
           mkdir -p .base-image-digests
 
-          {
-            echo "deck=${{ needs.base-digests.outputs.deck-digest }}"
-            echo "gnome=${{ needs.base-digests.outputs.gnome-digest }}"
-            echo "kde=${{ needs.base-digests.outputs.kde-digest }}"
-          } | tee .base-image-digests/digests.txt
+          cat > .base-image-digests/digests.tsv <<'EOF'
+          ${{ needs.base-digests.outputs.digests-tsv }}
+          EOF
+
+          sed -i 's/^          //' .base-image-digests/digests.tsv
+          cat .base-image-digests/digests.tsv
 
       - name: Save base digest cache
         uses: actions/cache/save@v5.0.5
@@ -282,7 +296,7 @@ jobs:
       - base-digests
       - bluebuild
       - bluebuild_40cu
-    if: needs.base-digests.outputs.should-build == 'true' && github.ref_name == github.event.repository.default_branch && needs.bluebuild.result == 'success' && needs.bluebuild_40cu.result == 'success'
+    if: needs.base-digests.outputs.should-build == 'true' && github.ref_name == github.event.repository.default_branch && (needs.bluebuild.result == 'success' || needs.bluebuild.result == 'skipped') && (needs.bluebuild_40cu.result == 'success' || needs.bluebuild_40cu.result == 'skipped')
     runs-on: ubuntu-latest
     permissions:
       contents: write

@@ -14,6 +14,7 @@
 - [Bazzite AMD BC-250 Patched Images for Deck, GNOME, and KDE](#bazzite-amd-bc-250-patched-images-for-deck-gnome-and-kde)
 - [Documentation](#documentation)
 - [Which image should I use?](#which-image-should-i-use)
+- [Other Bazzite update channels](#other-bazzite-update-channels)
 - [Install](#install)
 - [After install](#after-install)
 - [Experimental 40CU images](#experimental-40cu-images)
@@ -33,7 +34,7 @@
 
 [![Build Bazzite BC-250](https://github.com/62fixolab/Latest-Bazzite-AMD-BC-250-Patched-Images/actions/workflows/build.yml/badge.svg)](https://github.com/62fixolab/Latest-Bazzite-AMD-BC-250-Patched-Images/actions/workflows/build.yml)
 
-Current Bazzite images for AMD BC-250 boards. This is not a Bazzite fork; it is current official Bazzite `stable` plus BC-250-specific setup.
+Current Bazzite images for AMD BC-250 boards. This is not a Bazzite fork; the recommended packages are current official Bazzite `stable` plus BC-250-specific setup. Separate `testing` and `unstable` packages are also published for users who deliberately want to test those Bazzite channels.
 
 They use the official Bazzite `stable` base and add the BC-250 pieces most users need:
 
@@ -79,6 +80,37 @@ Published images:
 
 > [!IMPORTANT]
 > The normal images are the recommended choice. The `-40cu` images are for testing only and do not guarantee that your board will be stable with extra CUs enabled.
+
+# Other Bazzite update channels
+
+Stable is still the recommended channel. This repo also publishes separate packages for Bazzite `testing` and `unstable` so users can test upstream Bazzite channels without overwriting the stable `latest` tags.
+
+| Channel | Use | Normal package suffix | 40CU package suffix |
+| --- | --- | --- | --- |
+| `stable` | Recommended daily use | none | `-40cu` |
+| `testing` | Preview future Bazzite builds before stable release | `-testing` | `-40cu-testing` |
+| `unstable` | Bazzite contributor/advanced testing only | `-unstable` | `-40cu-unstable` |
+
+Examples:
+
+```bash
+# Deck testing
+rpm-ostree rebase ostree-image-signed:docker://ghcr.io/62fixolab/bazzite-bc250-patched-deck-testing:latest
+
+# Deck unstable
+rpm-ostree rebase ostree-image-signed:docker://ghcr.io/62fixolab/bazzite-bc250-patched-deck-unstable:latest
+
+# Deck testing with optional 40CU tooling
+rpm-ostree rebase ostree-image-signed:docker://ghcr.io/62fixolab/bazzite-bc250-patched-deck-40cu-testing:latest
+```
+
+Replace `deck` with `gnome` or `kde` to stay on the same desktop environment.
+
+> [!WARNING]
+> Bazzite documents that rebasing between desktop environments can cause issues and is unsupported. Stay on Deck, GNOME, or KDE when changing channels.
+
+> [!CAUTION]
+> `testing` can include bugs, and `unstable` is intended for Bazzite core contributor testing. Use the stable packages unless you specifically want to test those channels.
 
 # Install
 
@@ -227,10 +259,10 @@ systemctl reboot
 
 # Updates and rollback
 
-Images are checked daily against official Bazzite `stable` base digests. If Bazzite stable changes, GitHub Actions rebuilds the patched images.
+Images are checked daily against official Bazzite `stable`, `testing`, and `unstable` base digests. If a Bazzite channel changes for a specific Deck/GNOME/KDE base, GitHub Actions rebuilds only the matching normal and `-40cu` packages.
 
 > [!NOTE]
-> Commits to this repository do not rebuild packages by themselves when the Bazzite `stable` digests are unchanged. A manual workflow run can still force a rebuild if needed.
+> Commits to this repository do not rebuild packages by themselves when the Bazzite channel digests are unchanged. A manual workflow run can still force a rebuild if needed.
 
 Update normally:
 
@@ -262,7 +294,7 @@ This repository continues the idea from:
 | Governor | `oberon-governor` | `cyan-skillfish-governor-smu` |
 | Old patched kernel COPR | Required | Removed |
 | GPU usage `655%` bug | Not fixed | Fixed |
-| Rebuilds | Weekly | Only when Bazzite stable changes |
+| Rebuilds | Weekly | Only changed Bazzite channel/variant packages rebuild |
 | Signing | vietsman signed images | This repo's signed images |
 | Experimental 40CU | Not included | Separate `-40cu` images |
 
@@ -286,6 +318,7 @@ This repository also packages tooling and documentation from [`duggasco/bc250-40
 # References
 
 - [Bazzite updates, rollbacks, and rebasing](https://docs.bazzite.gg/Installing_and_Managing_Software/Updates_Rollbacks_and_Rebasing/)
+- [Bazzite rebase guide](https://docs.bazzite.gg/Installing_and_Managing_Software/Updates_Rollbacks_and_Rebasing/rebase_guide/)
 - [Bazzite ujust commands](https://docs.bazzite.gg/Installing_and_Managing_Software/ujust/)
 - [Bazzite Sunshine documentation](https://docs.bazzite.gg/Advanced/sunshine/)
 - [`filippor/cyan-skillfish-governor`](https://github.com/filippor/cyan-skillfish-governor)
