@@ -350,8 +350,13 @@ def render_notes(
 
     lines.extend(
         [
-            "- Includes `cyan-skillfish-governor-smu`, GPU frequency scaling, and the MangoHud/radeontop `655%` telemetry fix.",
-            "- Images are signed for `ostree-image-signed` rebases.",
+            "",
+            "## Included in every image",
+            "",
+            "- `cyan-skillfish-governor-smu`.",
+            "- GPU frequency scaling for AMD BC-250 boards.",
+            "- MangoHud/radeontop `655%` GPU usage telemetry fix.",
+            "- Signed images for `ostree-image-signed` rebases.",
             "",
         ]
     )
@@ -426,6 +431,7 @@ def render_notes(
             "## Documentation",
             "",
             f"- Main README: {repo_url}",
+            f"- Bazzite channel/package guide: {repo_url}/blob/main/docs/update-channels.md",
         ]
     )
 

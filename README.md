@@ -53,6 +53,7 @@ Start here and only open the advanced guide if you are testing the experimental 
 | Need | Read |
 | --- | --- |
 | Install Deck, GNOME, or KDE | This README |
+| Use `stable`, `testing`, or `unstable` packages | [Bazzite Channel Packages](docs/update-channels.md) |
 | Check the image after install | [After install](#after-install) |
 | Fix common BC-250 issues | [Common fixes](#common-fixes) |
 | Test 32CU/40CU unlock | [Experimental 40CU Guide](docs/40cu.md) |
@@ -105,6 +106,8 @@ rpm-ostree rebase ostree-image-signed:docker://ghcr.io/62fixolab/bazzite-bc250-p
 ```
 
 Replace `deck` with `gnome` or `kde` to stay on the same desktop environment.
+
+The complete package matrix and install commands for every Deck/GNOME/KDE, normal, and `-40cu` channel are in [docs/update-channels.md](docs/update-channels.md).
 
 > [!WARNING]
 > Bazzite documents that rebasing between desktop environments can cause issues and is unsupported. Stay on Deck, GNOME, or KDE when changing channels.
