@@ -7,11 +7,13 @@ base-image: ghcr.io/ublue-os/bazzite-gnome
 image-version: stable
 
 modules:
-  - type: rpm-ostree
+  - type: dnf
     repos:
-      - https://copr.fedorainfracloud.org/coprs/filippor/bazzite/repo/fedora-%OS_VERSION%/filippor-bazzite-fedora-%OS_VERSION%.repo
+      copr:
+        - filippor/bazzite
     install:
-      - cyan-skillfish-governor-smu
+      packages:
+        - cyan-skillfish-governor-smu
 
   - type: systemd
     system:
