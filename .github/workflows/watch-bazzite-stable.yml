@@ -1,0 +1,59 @@
+name: Watch Bazzite stable release
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  watch:
+    name: Trigger build on a new Bazzite stable release
+    runs-on: ubuntu-latest
+    steps:
+      # releases/latest only returns the newest non-prerelease, so testing-* and unstable-* are ignored.
+      # Upstream publishes it at the end of the stable build, once the images are already pushed.
+      - name: Read latest Bazzite stable release
+        id: latest
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag="$(gh api repos/ublue-os/bazzite/releases/latest --jq .tag_name)"
+          echo "Latest Bazzite stable release: ${tag}"
+          echo "tag=${tag}" >> "${GITHUB_OUTPUT}"
+          mkdir -p .bazzite-stable-release
+          echo "${tag}" > .bazzite-stable-release/tag
+
+      - name: Check whether this release was already handled
+        id: seen
+        uses: actions/cache/restore@v5.0.5
+        with:
+          path: .bazzite-stable-release
+          key: bazzite-stable-release-${{ steps.latest.outputs.tag }}
+          lookup-only: true
+
+      - name: Dispatch the image build
+        if: steps.seen.outputs.cache-hit != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.latest.outputs.tag }}
+          REPO: ${{ github.repository }}
+          REF: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+          echo "New Bazzite stable release ${TAG}: dispatching build.yml"
+          gh workflow run build.yml --repo "${REPO}" --ref "${REF}"
+
+      - name: Remember this release
+        if: steps.seen.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v5.0.5
+        with:
+          path: .bazzite-stable-release
+          key: bazzite-stable-release-${{ steps.latest.outputs.tag }}
